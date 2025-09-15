@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Server endpoints to try
     const serverEndpoints = [
-        'http://localhost:4000',
+        'http://localhost:5500',
         'http://127.0.0.1:4000'
     ];
     

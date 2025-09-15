@@ -6,7 +6,7 @@ echo.
 echo Installing dependencies (if needed)...
 npm install
 echo.
-echo Starting server on http://localhost:4000
+echo Starting server on http://localhost:5500
 echo Press Ctrl+C to stop the server
 echo.
 npm start
