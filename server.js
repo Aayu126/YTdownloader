@@ -10,7 +10,11 @@ dotenv.config();
 // Create an Express application
 const app = express();
 // Enable CORS to allow requests from your frontend
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500', '*'],
+    credentials: true
+}));
+app.use(express.json());
 
 // Define the port for the server, using the environment variable or defaulting to 4000
 const PORT = process.env.PORT || 4000;
