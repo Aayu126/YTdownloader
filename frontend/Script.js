@@ -41,42 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to initiate video download
     function initiateDownload(videoId, itag, quality) {
-        const downloadUrl = `${currentServerEndpoint}/api/download?videoId=${videoId}&itag=${itag}`;
+        const downloadUrl = `http://localhost:5500/api/download?videoId=${videoId}&itag=${itag}`;
         window.location.href = downloadUrl;
         createNotification('Download Started!', `Your video (${quality}) is now downloading.`, 'success');
     }
 
     // Function to initiate audio download
     function initiateAudioDownload(videoId) {
-        const downloadUrl = `${currentServerEndpoint}/api/audio?videoId=${videoId}`;
+        const downloadUrl = `http://localhost:5500/api/audio?videoId=${videoId}`;
         window.location.href = downloadUrl;
         createNotification('Audio Download Started!', `Your audio file is now downloading.`, 'success');
-    }
-    
-    // Server endpoints to try
-    const serverEndpoints = [
-        'http://localhost:5500',
-        'http://127.0.0.1:4000'
-    ];
-    
-    let currentServerEndpoint = serverEndpoints[0];
-    
-    // Function to test server connection
-    async function testServerConnection() {
-        for (const endpoint of serverEndpoints) {
-            try {
-                const response = await fetch(`${endpoint}/api/videoInfo?url=test`, {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(3000) // 3 second timeout
-                });
-                // Even if it returns an error, if we get a response, the server is running
-                currentServerEndpoint = endpoint;
-                return true;
-            } catch (error) {
-                continue;
-            }
-        }
-        return false;
     }
     
     // Function to fetch video info from the backend
@@ -86,24 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
         videoDetailsSection.style.display = 'none';
         
         try {
-            // First test if server is reachable
-            const serverReachable = await testServerConnection();
-            if (!serverReachable) {
-                throw new Error('Cannot connect to server. Please ensure the backend server is running on port 4000.\n\nTo start the server:\n1. Open terminal/command prompt\n2. Navigate to the project directory\n3. Run: npm start');
-            }
-            
-            const response = await fetch(`${currentServerEndpoint}/api/videoInfo?url=${encodeURIComponent(url)}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                signal: AbortSignal.timeout(15000) // 15 second timeout
-            });
+            const response = await fetch(`http://localhost:5500/api/videoInfo?url=${encodeURIComponent(url)}`);
             
             // Check for network errors (server not running)
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Server Error: ${response.status} ${response.statusText}`);
+                if (response.status === 500 && !errorData.error) {
+                    throw new Error('Connection failed. Please ensure the backend server is running.');
+                }
+                throw new Error(errorData.error || `Error: ${response.statusText}`);
             }
 
             const data = await response.json();
@@ -119,16 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateDownloadOptions();
             
         } catch (error) {
-            let errorMsg = error.message;
-            if (error.name === 'TimeoutError') {
-                errorMsg = 'Request timeout. Please check your internet connection and try again.';
-            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                errorMsg = 'Cannot connect to server. Please ensure the backend server is running on port 4000.\n\nTo start the server:\n1. Open terminal in project directory\n2. Run: npm start';
-            }
-            
-            errorMessage.innerHTML = errorMsg.replace(/\n/g, '<br>');
+            errorMessage.textContent = error.message;
             errorMessage.style.display = 'block';
-            createNotification('Connection Error', errorMsg.split('\n')[0], 'error');
+            createNotification('Error', error.message, 'error');
         } finally {
             loader.style.display = 'none';
         }
